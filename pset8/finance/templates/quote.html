@@ -1,0 +1,19 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Quote
+{% endblock %}
+
+{% block main %}
+    {% if price_info %}
+    <div>
+        <p>{{ price_info }}</p>
+    </div>
+    {% endif %}
+    <form action="/quote" method="post">
+        <div class="form-group">
+            <input class="form-control" name="symbol" placeholder="Symbol" type="text" autofocus>
+        </div>
+        <button class="btn btn-primary" type="submit">Quote</button>
+    </form>
+{% endblock %}
