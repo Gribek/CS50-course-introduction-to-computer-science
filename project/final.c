@@ -17,21 +17,29 @@ int main(void)
         return 1;
     }
 
-
-    char ch = fgetc(file);
+    // Initialize counter
     int counter;
+
+    // Get the first character
+    char ch = fgetc(file);
+
+    // Read data from file
     while (ch != EOF)
     {
+        // Get next char if current one is a newline character
         if (ch == '\n')
         {
             ch = fgetc(file);
             continue;
         }
 
+        // Allocate memory for next line
         char *line = malloc(200 * sizeof(char));
 
+        // Reset counter
         counter = 0;
 
+        // Get all characters in this line
         do
         {
             line[counter] = ch;
@@ -40,9 +48,13 @@ int main(void)
         }
         while (ch != '\n' && ch != EOF);
 
+        // Add null character
         line[counter] = '\0';
+
+        // Print line
         printf("%s\n", line);
 
+        // Free memory for line
         free(line);
     }
 
