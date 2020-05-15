@@ -10,6 +10,7 @@
 typedef struct node
 {
     char element[3];
+    char type[3];
     struct node *next;
 }
 node;
@@ -135,8 +136,13 @@ bool add_node(char *line)
         return false;
     }
 
-    // Copy line into node
-    strcpy(n->element, line);
+    // Copy data into node
+    char *data = strtok(line, ",");
+    strcpy(n->element, data);
+    data = strtok(NULL, ",");
+    strcpy(n->type, data);
+
+    // Last node in linked list
     n->next = NULL;
 
     // Insert node to the linked list
@@ -162,6 +168,6 @@ void print_list(void)
 {
     for (node *cursor = elements; cursor != NULL; cursor = cursor->next)
     {
-        printf("%s\n", cursor->element);
+        printf("Element: %s; type: %s;\n", cursor->element, cursor->type);
     }
 }
