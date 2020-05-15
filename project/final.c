@@ -15,6 +15,31 @@ typedef struct node
 }
 node;
 
+// Represent a single atom in a compound
+typedef struct
+{
+    node *element;
+    unsigned short int quantity;
+}
+atom;
+
+// Represent a single compound
+typedef struct
+{
+    atom atoms[10];
+    unsigned short int coefficient;
+    short int charge;
+}
+compound;
+
+// Represent equation
+typedef struct
+{
+    compound substrates[6];
+    compound products[6];
+}
+equation;
+
 // Linked list
 node *elements = NULL;
 
