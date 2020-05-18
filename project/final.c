@@ -10,8 +10,8 @@
 // Represent a node in a linked list
 typedef struct node
 {
-    char element[3];
-    char type[3];
+    char *element;
+    char *type;
     struct node *next;
 }
 node;
@@ -248,6 +248,8 @@ bool unload(void)
     while (elements != NULL)
     {
         node *t = elements->next;
+        free(elements->element);
+        free(elements->type);
         free(elements);
         elements = t;
     }
@@ -265,8 +267,10 @@ bool add_node(char *line)
 
     // Copy data into node
     char *data = strtok(line, ",");
+    n->element = malloc(strlen(data) + 1);
     strcpy(n->element, data);
     data = strtok(NULL, ",");
+    n->type = malloc(strlen(data) + 1);
     strcpy(n->type, data);
 
     // Last node in linked list
