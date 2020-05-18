@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <ctype.h>
 
 // Default file with elements data
 #define DATAFILE "elements"
@@ -15,7 +16,7 @@ typedef struct node
 }
 node;
 
-// Represent a single atom in a compound
+// Represent an individual atoms in a compound
 typedef struct
 {
     node *element;
@@ -49,8 +50,106 @@ bool load(const char *data_file);
 bool add_node(char *line);
 void print_list(void);
 
-int main(void)
+int main(int argc, char *argv[])
 {
+    // Check for correct number of args
+    if (argc < 4)
+    {
+        printf("Enter equation correctly\n");
+        return 1;
+    }
+
+    // Allocate memory for the equation
+    equation *eqtn = malloc(sizeof(equation));
+
+    // Declare variables & counters
+    char elem[3], quantity[4];
+    int e, q, charge;
+
+    // Collect data about each compound
+    for (int i = 1; i < argc; i += 2)
+    {
+        //Reset compound charge
+        charge = 0;
+
+        // Reset counters
+        e = 0;
+        q = 0;
+
+        // Identify elements in the compound, their quantity and compound charge
+        for (int j = 0, len = strlen(argv[i]); j < len; j++)
+        {
+            char ch = argv[i][j];
+
+            if (isupper(ch))
+            {
+                if (e == 0)
+                {
+                    elem[e] = ch;
+                    e++;
+                }
+                else
+                {
+                    // TODO
+                    //do sth with element
+                    elem[e] = '\0';
+                    printf("%s\n", elem);
+                    if (q != 0)
+                    {
+                        quantity[q] = '\0';
+                        printf("%d\n", atoi(quantity));
+                        q = 0;
+                    }
+
+                    elem[0] = ch;
+                    e = 1;
+                }
+            }
+            else if (islower(ch))
+            {
+                if (e == 1)
+                {
+                    elem[e] = ch;
+                    e++;
+                }
+                else
+                {
+                    free(eqtn);
+                    printf("Invalid equation format\n");
+                    return 1;
+                }
+            }
+            else if (isdigit(ch))
+            {
+                quantity[q] = ch;
+                q++;
+            }
+            else if (ch == '+')
+            {
+
+                charge = atoi(&argv[i][j+1]);
+                break;
+            }
+            else if (ch == '-')
+            {
+                charge = -(atoi(&argv[i][j+1]));
+                break;
+            }
+        }
+
+        // TODO
+        // do sth with element
+        elem[e] = '\0';
+        printf("%s\n", elem);
+        if (q != 0)
+            {
+                quantity[q] = '\0';
+                printf("%d\n", atoi(quantity));
+                q = 0;
+            }
+        printf("%d\n", charge);
+    }
+
     // Load elements data to memory
     bool loaded = load(DATAFILE);
 
@@ -73,6 +172,9 @@ int main(void)
         printf("Could not unload %s\n", DATAFILE);
         return 1;
     }
+
+    // Free memory for equation
+    free(eqtn);
 }
 
 // Load data into memory, returning true if successful else false
@@ -97,7 +199,7 @@ bool load(const char *data_file)
     // Get the first character
     char ch = fgetc(file);
 
-    // Initialize char counter
+    // Declare char counter
     int counter;
 
     // Read data from the file
