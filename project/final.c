@@ -28,7 +28,6 @@ atom;
 typedef struct
 {
     atom atoms[10];
-    unsigned short int coefficient;
     short int charge;
 }
 compound;
@@ -36,8 +35,10 @@ compound;
 // Represent equation
 typedef struct
 {
-    compound substrates[6];
-    compound products[6];
+    compound *substrates;
+    compound *products;
+    unsigned short int *subs_coefficients;
+    unsigned short int *prod_coefficients;
 }
 equation;
 
@@ -48,7 +49,9 @@ node *elements = NULL;
 bool unload(void);
 bool load(const char *data_file);
 bool add_node(char *line);
+node *find(char *elem);
 void print_list(void);
+bool unload_eqtn(equation *eqtn);
 
 int main(int argc, char *argv[])
 {
@@ -59,20 +62,61 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    // Allocate memory for the equation
+    // TODO
+    // Equation validation
+
+    // Count number of substrates and products
+    int subs_number = 0, prod_number = 0;
+    bool equal_sign = false;
+    char c;
+    for (int i = 1; i < argc; i++)
+    {
+        c = argv[i][0];
+        if (c == '=')
+        {
+            equal_sign = true;
+            continue;
+        }
+        if (isupper(c) || c == '(' || c == '[')
+        {
+            if (!equal_sign)
+            {
+                subs_number++;
+            }
+            else
+            {
+                prod_number++;
+            }
+        }
+    }
+
+    // Load elements data to memory
+    bool loaded = load(DATAFILE);
+
+    // Exit if data not loaded
+    if (!loaded)
+    {
+        printf("Could not load %s\n", DATAFILE);
+        return 1;
+    }
+
+    // Allocate memory for the equation data
     equation *eqtn = malloc(sizeof(equation));
+    eqtn->substrates = malloc(sizeof(compound) * subs_number);
+    eqtn->products = malloc(sizeof(compound) * prod_number);
+    eqtn->subs_coefficients = malloc(sizeof(int) * subs_number);
+    eqtn->prod_coefficients = malloc(sizeof(int) * prod_number);
 
     // Declare variables & counters
     char elem[3], quantity[4];
-    int e, q, charge;
+    int e, q, a, charge;
 
     // Collect data about each compound
-    for (int i = 1; i < argc; i += 2)
+    for (int i = 1, n = 0; i < argc; i += 2, n++)
     {
-        //Reset compound charge
-        charge = 0;
-
         // Reset counters
+        charge = 0;
+        a = 0;
         e = 0;
         q = 0;
 
@@ -90,16 +134,21 @@ int main(int argc, char *argv[])
                 }
                 else
                 {
-                    // TODO
-                    //do sth with element
                     elem[e] = '\0';
+                    quantity[q] = '\0';
+
+
+                    // TODO
+                    // save data to substrates and products !
+
+
+                    eqtn->substrates[n].atoms[a].element = find(elem);
+                    eqtn->substrates[n].atoms[a].quantity = (q == 0) ? 1 : atoi(quantity);
+                    q = 0;
+                    a++;
+
                     printf("%s\n", elem);
-                    if (q != 0)
-                    {
-                        quantity[q] = '\0';
-                        printf("%d\n", atoi(quantity));
-                        q = 0;
-                    }
+                    printf("%d\n", atoi(quantity));
 
                     elem[0] = ch;
                     e = 1;
@@ -114,7 +163,7 @@ int main(int argc, char *argv[])
                 }
                 else
                 {
-                    free(eqtn);
+                    unload_eqtn(eqtn);
                     printf("Invalid equation format\n");
                     return 1;
                 }
@@ -137,31 +186,26 @@ int main(int argc, char *argv[])
             }
         }
 
-        // TODO
-        // do sth with element
         elem[e] = '\0';
+        quantity[q] = '\0';
+
+        eqtn->substrates[n].atoms[a].element = find(elem);
+        eqtn->substrates[n].atoms[a].quantity = (q == 0) ? 1 : atoi(quantity);
+
+        eqtn->substrates[n].charge = charge;
+
         printf("%s\n", elem);
-        if (q != 0)
-            {
-                quantity[q] = '\0';
-                printf("%d\n", atoi(quantity));
-                q = 0;
-            }
+        printf("%d\n", atoi(quantity));
+
         printf("%d\n", charge);
-    }
-
-    // Load elements data to memory
-    bool loaded = load(DATAFILE);
-
-    // Exit if data not loaded
-    if (!loaded)
-    {
-        printf("Could not load %s\n", DATAFILE);
-        return 1;
     }
 
     // Print linked list
     print_list();
+
+    node *cursor = eqtn->substrates[0].atoms[0].element;
+    printf("TEST\nElement: %s; type: %s;\n", cursor->element, cursor->type);
+    printf("Q: %d", eqtn->substrates[0].atoms[0].quantity);
 
     // Unload elements data from memory
     bool unloaded = unload();
@@ -173,9 +217,26 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    // Free memory for equation
-    free(eqtn);
+    // Free memory for equation data
+    bool unloaded_eqtn = unload_eqtn(eqtn);
+    if (!unloaded_eqtn)
+    {
+        printf("Could not unload equation data");
+        return 1;
+    }
 }
+
+bool unload_eqtn(equation *eqtn)
+{
+    free(eqtn->substrates);
+    free(eqtn->products);
+    free(eqtn->subs_coefficients);
+    free(eqtn->prod_coefficients);
+    free(eqtn);
+    return true;
+}
+
+
 
 // Load data into memory, returning true if successful else false
 bool load(const char *data_file)
@@ -292,6 +353,25 @@ bool add_node(char *line)
     }
 
     return true;
+}
+
+node *find(char *elem)
+{
+    // Create cursor to traverse across linked list
+    node *cursor = elements;
+
+    // Loop through nodes in linked list
+    while (cursor != NULL)
+    {
+        // Check if element is the one you are looking for
+        if (strcmp(cursor->element, elem) == 0)
+        {
+        return cursor;
+        }
+        // Go to the next node
+        cursor = cursor->next;
+    }
+    return NULL;
 }
 
 // Print all data from linked list
