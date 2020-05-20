@@ -51,7 +51,8 @@ bool load(const char *data_file);
 bool add_node(char *line);
 node *find(char *elem);
 void analyze_compounds(char *argv[], int number, compound *type, int first);
-void save_atom(char *element, char *quantity, int q, atom *save_to);
+int calculate_quantity(char *quantity, int q, int multiplier);
+void save_atom(char *element, int quantity, atom *save_to);
 void print_list(void);
 bool unload_eqtn(equation *eqtn);
 
@@ -274,13 +275,14 @@ void analyze_compounds(char *argv[], int number, compound *type, int first)
 {
     // Declare variables & counters
     char atom[3], quantity[4];
-    int a, q, m, charge;
+    int a, q, m, charge, multiplier;
 
     // Collect data about each compound
     for (int i = first, n = 0; n < number; i += 2, n++)
     {
         // Reset charge and counters
         charge = 0;
+        multiplier = 1;
         m = 0;
         a = 0;
         q = 0;
@@ -302,13 +304,13 @@ void analyze_compounds(char *argv[], int number, compound *type, int first)
                     atom[a] = '\0';
                     quantity[q] = '\0';
 
-                    save_atom(atom, quantity, q, &(type[n].atoms[m]));
+                    save_atom(atom, calculate_quantity(quantity, q, multiplier), &(type[n].atoms[m]));
+
+                    printf("%s\n", atom);
+                    printf("%d\n", calculate_quantity(quantity, q, multiplier));
 
                     q = 0;
                     m++;
-
-                    printf("%s\n", atom);
-                    printf("%d\n", atoi(quantity));
 
                     atom[0] = ch;
                     a = 1;
@@ -318,6 +320,47 @@ void analyze_compounds(char *argv[], int number, compound *type, int first)
             {
                 atom[a] = ch;
                 a++;
+            }
+            else if (ch == '[')
+            {
+                if (a != 0)
+                {
+                    atom[a] = '\0';
+                    quantity[q] = '\0';
+
+                    save_atom(atom, calculate_quantity(quantity, q, multiplier), &(type[n].atoms[m]));
+
+                    printf("%s\n", atom);
+                    printf("%d\n", calculate_quantity(quantity, q, multiplier));
+
+                    a = 0;
+                    q = 0;
+                    m++;
+                }
+
+                int k = j;
+                while (argv[i][k] != ']')
+                {
+                    k++;
+                }
+                multiplier = atoi(&argv[i][k+1]);
+            }
+            else if (ch == ']')
+            {
+                atom[a] = '\0';
+                quantity[q] = '\0';
+
+                save_atom(atom, calculate_quantity(quantity, q, multiplier), &(type[n].atoms[m]));
+
+                printf("%s\n", atom);
+                printf("%d\n", calculate_quantity(quantity, q, multiplier));
+
+                a = 0;
+                q = 0;
+                m++;
+
+                multiplier = 1;
+                j++;
             }
             else if (isdigit(ch))
             {
@@ -337,23 +380,47 @@ void analyze_compounds(char *argv[], int number, compound *type, int first)
             }
         }
 
+        if (a == 0)
+        {
+            continue;
+        }
+
         atom[a] = '\0';
         quantity[q] = '\0';
 
-        save_atom(atom, quantity, q, &(type[n].atoms[m]));
+        save_atom(atom, calculate_quantity(quantity, q, multiplier), &(type[n].atoms[m]));
 
         type[n].charge = charge;
 
         printf("%s\n", atom);
-        printf("%d\n", atoi(quantity));
-        printf("%d\n", charge);
+        printf("%d\n", calculate_quantity(quantity, q, multiplier));
+        // printf("%d\n", charge);
     }
 }
 
-void save_atom(char *element, char *quantity, int q, atom *save_to)
+int calculate_quantity(char *quantity, int q, int multiplier)
+{
+    if (q == 0)
+    {
+        if (multiplier == 1)
+        {
+            return 1;
+        }
+        else
+        {
+            return multiplier;
+        }
+    }
+    else
+    {
+        return atoi(quantity) * multiplier;
+    }
+}
+
+void save_atom(char *element, int quantity, atom *save_to)
 {
     save_to->element = find(element);
-    save_to->quantity = (q == 0) ? 1 : atoi(quantity);
+    save_to->quantity = quantity;
 }
 
 node *find(char *atom)
