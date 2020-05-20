@@ -50,6 +50,8 @@ bool unload(void);
 bool load(const char *data_file);
 bool add_node(char *line);
 node *find(char *elem);
+void analyze_compounds(char *argv[], int number, compound *type, int first);
+void save_atom(char *element, char *quantity, int q, atom *save_to);
 void print_list(void);
 bool unload_eqtn(equation *eqtn);
 
@@ -64,6 +66,7 @@ int main(int argc, char *argv[])
 
     // TODO
     // Equation validation
+    // printf("Invalid equation format\n");
 
     // Count number of substrates and products
     int subs_number = 0, prod_number = 0;
@@ -107,98 +110,11 @@ int main(int argc, char *argv[])
     eqtn->subs_coefficients = malloc(sizeof(int) * subs_number);
     eqtn->prod_coefficients = malloc(sizeof(int) * prod_number);
 
-    // Declare variables & counters
-    char elem[3], quantity[4];
-    int e, q, a, charge;
+    // Load substrates
+    analyze_compounds(argv, subs_number, eqtn->substrates, 1);
 
-    // Collect data about each compound
-    for (int i = 1, n = 0; i < argc; i += 2, n++)
-    {
-        // Reset counters
-        charge = 0;
-        a = 0;
-        e = 0;
-        q = 0;
-
-        // Identify elements in the compound, their quantity and compound charge
-        for (int j = 0, len = strlen(argv[i]); j < len; j++)
-        {
-            char ch = argv[i][j];
-
-            if (isupper(ch))
-            {
-                if (e == 0)
-                {
-                    elem[e] = ch;
-                    e++;
-                }
-                else
-                {
-                    elem[e] = '\0';
-                    quantity[q] = '\0';
-
-
-                    // TODO
-                    // save data to substrates and products !
-
-
-                    eqtn->substrates[n].atoms[a].element = find(elem);
-                    eqtn->substrates[n].atoms[a].quantity = (q == 0) ? 1 : atoi(quantity);
-                    q = 0;
-                    a++;
-
-                    printf("%s\n", elem);
-                    printf("%d\n", atoi(quantity));
-
-                    elem[0] = ch;
-                    e = 1;
-                }
-            }
-            else if (islower(ch))
-            {
-                if (e == 1)
-                {
-                    elem[e] = ch;
-                    e++;
-                }
-                else
-                {
-                    unload_eqtn(eqtn);
-                    printf("Invalid equation format\n");
-                    return 1;
-                }
-            }
-            else if (isdigit(ch))
-            {
-                quantity[q] = ch;
-                q++;
-            }
-            else if (ch == '+')
-            {
-
-                charge = atoi(&argv[i][j+1]);
-                break;
-            }
-            else if (ch == '-')
-            {
-                charge = -(atoi(&argv[i][j+1]));
-                break;
-            }
-        }
-
-        elem[e] = '\0';
-        quantity[q] = '\0';
-
-        eqtn->substrates[n].atoms[a].element = find(elem);
-        eqtn->substrates[n].atoms[a].quantity = (q == 0) ? 1 : atoi(quantity);
-
-        eqtn->substrates[n].charge = charge;
-
-        printf("%s\n", elem);
-        printf("%d\n", atoi(quantity));
-
-        printf("%d\n", charge);
-    }
+    // Load products
+    analyze_compounds(argv, prod_number, eqtn->products, 2 * subs_number + 1);
 
     // Print linked list
     print_list();
@@ -235,8 +151,6 @@ bool unload_eqtn(equation *eqtn)
     free(eqtn);
     return true;
 }
-
-
 
 // Load data into memory, returning true if successful else false
 bool load(const char *data_file)
@@ -355,7 +269,94 @@ bool add_node(char *line)
     return true;
 }
 
-node *find(char *elem)
+
+void analyze_compounds(char *argv[], int number, compound *type, int first)
+{
+    // Declare variables & counters
+    char atom[3], quantity[4];
+    int a, q, m, charge;
+
+    // Collect data about each compound
+    for (int i = first, n = 0; n < number; i += 2, n++)
+    {
+        // Reset charge and counters
+        charge = 0;
+        m = 0;
+        a = 0;
+        q = 0;
+
+        // Identify elements in the compound, their quantity and compound charge
+        for (int j = 0, len = strlen(argv[i]); j < len; j++)
+        {
+            char ch = argv[i][j];
+
+            if (isupper(ch))
+            {
+                if (a == 0)
+                {
+                    atom[a] = ch;
+                    a++;
+                }
+                else
+                {
+                    atom[a] = '\0';
+                    quantity[q] = '\0';
+
+                    save_atom(atom, quantity, q, &(type[n].atoms[m]));
+
+                    q = 0;
+                    m++;
+
+                    printf("%s\n", atom);
+                    printf("%d\n", atoi(quantity));
+
+                    atom[0] = ch;
+                    a = 1;
+                }
+            }
+            else if (islower(ch))
+            {
+                atom[a] = ch;
+                a++;
+            }
+            else if (isdigit(ch))
+            {
+                quantity[q] = ch;
+                q++;
+            }
+            else if (ch == '+')
+            {
+
+                charge = atoi(&argv[i][j+1]);
+                break;
+            }
+            else if (ch == '-')
+            {
+                charge = -(atoi(&argv[i][j+1]));
+                break;
+            }
+        }
+
+        atom[a] = '\0';
+        quantity[q] = '\0';
+
+        save_atom(atom, quantity, q, &(type[n].atoms[m]));
+
+        type[n].charge = charge;
+
+        printf("%s\n", atom);
+        printf("%d\n", atoi(quantity));
+        printf("%d\n", charge);
+    }
+}
+
+void save_atom(char *element, char *quantity, int q, atom *save_to)
+{
+    save_to->element = find(element);
+    save_to->quantity = (q == 0) ? 1 : atoi(quantity);
+}
+
+node *find(char *atom)
 {
     // Create cursor to traverse across linked list
     node *cursor = elements;
@@ -364,7 +365,7 @@ node *find(char *elem)
     while (cursor != NULL)
     {
         // Check if element is the one you are looking for
-        if (strcmp(cursor->element, elem) == 0)
+        if (strcmp(cursor->element, atom) == 0)
         {
         return cursor;
         }
