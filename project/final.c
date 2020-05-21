@@ -4,57 +4,13 @@
 #include <stdbool.h>
 #include <ctype.h>
 
+#include "final.h"
+
 // Default file with elements data
 #define DATAFILE "elements"
 
-// Represent a node in a linked list
-typedef struct node
-{
-    char *element;
-    char *type;
-    struct node *next;
-}
-node;
-
-// Represent an individual atoms in a compound
-typedef struct
-{
-    node *element;
-    unsigned short int quantity;
-}
-atom;
-
-// Represent a single compound
-typedef struct
-{
-    atom atoms[10];
-    short int charge;
-}
-compound;
-
-// Represent equation
-typedef struct
-{
-    compound *substrates;
-    compound *products;
-    unsigned short int *subs_coefficients;
-    unsigned short int *prod_coefficients;
-}
-equation;
-
 // Linked list
 node *elements = NULL;
-
-// Prototypes
-bool unload(void);
-bool load(const char *data_file);
-bool add_node(char *line);
-node *find(char *elem);
-void analyze_compounds(char *argv[], int number, compound *type, int first);
-int calculate_quantity(char *quantity, int q, int multiplier);
-void save_atom(char *element, int quantity, atom *save_to);
-void print_list(void);
-bool unload_eqtn(equation *eqtn);
 
 int main(int argc, char *argv[])
 {
@@ -71,28 +27,7 @@ int main(int argc, char *argv[])
 
     // Count number of substrates and products
     int subs_number = 0, prod_number = 0;
-    bool equal_sign = false;
-    char c;
-    for (int i = 1; i < argc; i++)
-    {
-        c = argv[i][0];
-        if (c == '=')
-        {
-            equal_sign = true;
-            continue;
-        }
-        if (isupper(c) || c == '(' || c == '[')
-        {
-            if (!equal_sign)
-            {
-                subs_number++;
-            }
-            else
-            {
-                prod_number++;
-            }
-        }
-    }
+    count_compounds(argc, argv, &subs_number, &prod_number);
 
     // Load elements data to memory
     bool loaded = load(DATAFILE);
@@ -270,6 +205,31 @@ bool add_node(char *line)
     return true;
 }
 
+void count_compounds(int argc, char *argv[], int *subs, int *prod)
+{
+    bool equal_sign = false;
+    char c;
+    for (int i = 1; i < argc; i++)
+    {
+        c = argv[i][0];
+        if (c == '=')
+        {
+            equal_sign = true;
+            continue;
+        }
+        if (isupper(c) || c == '{' || c == '[')
+        {
+            if (!equal_sign)
+            {
+                *subs += 1;
+            }
+            else
+            {
+                *prod += 1;
+            }
+        }
+    }
+}
 
 void analyze_compounds(char *argv[], int number, compound *type, int first)
 {
@@ -321,7 +281,7 @@ void analyze_compounds(char *argv[], int number, compound *type, int first)
                 atom[a] = ch;
                 a++;
             }
-            else if (ch == '[')
+            else if (ch == '{')
             {
                 if (a != 0)
                 {
@@ -339,13 +299,13 @@ void analyze_compounds(char *argv[], int number, compound *type, int first)
                 }
 
                 int k = j;
-                while (argv[i][k] != ']')
+                while (argv[i][k] != '}')
                 {
                     k++;
                 }
                 multiplier = atoi(&argv[i][k+1]);
             }
-            else if (ch == ']')
+            else if (ch == '}')
             {
                 atom[a] = '\0';
                 quantity[q] = '\0';
