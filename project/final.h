@@ -5,6 +5,7 @@ bool unload(void);
 bool load(const char *data_file);
 bool add_node(char *line);
 node *find(char *elem);
+bool check_equation(int argc, char *argv[]);
 void count_compounds(int argc, char *argv[], int *subs, int *prod);
 void analyze_compounds(char *argv[], int number, compound *type, int first);
 int calculate_quantity(char *quantity, int q, int multiplier);

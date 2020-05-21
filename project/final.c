@@ -14,16 +14,13 @@ node *elements = NULL;
 
 int main(int argc, char *argv[])
 {
-    // Check for correct number of args
-    if (argc < 4)
+    // Equation validation
+    bool correct = check_equation(argc, argv);
+    if (!correct)
     {
-        printf("Enter equation correctly\n");
+        printf("Invalid equation format\n");
         return 1;
     }
-
-    // TODO
-    // Equation validation
-    // printf("Invalid equation format\n");
 
     // Count number of substrates and products
     int subs_number = 0, prod_number = 0;
@@ -200,6 +197,155 @@ bool add_node(char *line)
     else
     {
         elements = n;
+    }
+
+    return true;
+}
+
+bool check_equation(int argc, char *argv[])
+{
+    // Check for correct number of arguments
+    if (argc < 4 || argc % 2 != 0)
+    {
+        return false;
+    }
+
+    // Current and previous character in equation
+    char c, p;
+
+    // Open/close brackets
+    bool square = false, curly = false;
+
+    // Equals sign
+    bool equals = false;
+
+    for (int i = 1; i < argc; i++)
+    {
+        // Compound check
+        if (i % 2 == 1)
+        {
+            // Check first character in compound
+            c = argv[i][0];
+
+            if (isupper(c))
+            {}
+            else if (c == '{')
+            {
+                curly = true;
+            }
+            else if (c == '[')
+            {
+                square = true;
+            }
+            else
+            {
+                return false;
+            }
+
+            // Check middle characters
+            for (int j = 1, len = strlen(argv[i]); j < len; j++)
+            {
+                p = c;
+                c = argv[i][j];
+
+                // Check if char is uppercase letter
+                if (isupper(c))
+                {}
+                // Check if upper letter before lower
+                else if (islower(c) && (isupper(p)))
+                {}
+                // Mark curly braces as open if not already open
+                else if (c == '{')
+                {
+                    if (!curly)
+                    {
+                        curly = true;
+                    }
+                    else
+                    {
+                        return false;
+                    }
+                }
+                // Mark square brace as open if not already open
+                else if (c == '[')
+                {
+                    if (!square)
+                    {
+                        square = true;
+                    }
+                    else
+                    {
+                        return false;
+                    }
+                }
+                // Mark curly braces as close if open
+                else if (c == '}')
+                {
+                    if (curly)
+                    {
+                        curly = false;
+                    }
+                    else
+                    {
+                        return false;
+                    }
+                }
+                // Mark square braces as close if open
+                else if (c == ']')
+                {
+                    if (square)
+                    {
+                        square = false;
+                    }
+                    else
+                    {
+                        return false;
+                    }
+                }
+                // Check if letter or close bracket before digit
+                else if (isdigit(c) && (isalpha(p) || p == '}'))
+                {}
+                // Return false for other cases
+                else
+                {
+                    return false;
+                }
+            }
+            // Check if brackets are close
+            if (curly || square)
+            {
+                return false;
+            }
+        }
+        // Sign check
+        else
+        {
+            // Check for correct length
+            if (strlen(argv[i]) != 1)
+            {
+                return false;
+            }
+
+            c = argv[i][0];
+
+            // Check if the symbol is allowed allowed synbol and
+            if (c == '+')
+            {}
+            // Check if equality sign occurs only once
+            else if (c == '=' && !equals)
+            {
+                equals = true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+    }
+    // Check if equals sign occurs in equation
+    if (!equals)
+    {
+        return false;
     }
 
     return true;
