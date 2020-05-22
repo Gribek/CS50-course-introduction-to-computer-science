@@ -1,4 +1,4 @@
-// Represent a node in a linked list
+// Represent a node in a linked list of elements
 typedef struct node
 {
     char *element;
@@ -19,6 +19,7 @@ atom;
 typedef struct
 {
     atom atoms[10];
+    short int atom_count;
     short int charge;
 }
 compound;
@@ -32,3 +33,14 @@ typedef struct
     unsigned short int *prod_coefficients;
 }
 equation;
+
+// Represent a node in the list of elements to balance
+typedef struct balance_node
+{
+    node *element_node;
+    int occurence;
+    int *compound_numbers;
+    int *coefficients_ratio;
+    struct balance_node *next;
+}
+balance_node;
