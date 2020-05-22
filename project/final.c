@@ -266,7 +266,7 @@ bool check_equation(int argc, char *argv[])
                         return false;
                     }
                 }
-                // Mark square brace as open if not already open
+                // Mark square brackets as open if not already open
                 else if (c == '[')
                 {
                     if (!square)
@@ -290,7 +290,7 @@ bool check_equation(int argc, char *argv[])
                         return false;
                     }
                 }
-                // Mark square braces as close if open
+                // Mark square brackets as close if open
                 else if (c == ']')
                 {
                     if (square)
@@ -302,9 +302,21 @@ bool check_equation(int argc, char *argv[])
                         return false;
                     }
                 }
-                // Check if letter or close bracket before digit
-                else if (isdigit(c) && (isalpha(p) || p == '}'))
+                // Check if letter, close bracket or charge sign before digit
+                else if (isdigit(c) && (isalnum(p) || p == '}' || p == '+' || p =='-'))
                 {}
+                // Check charge sign at the end of compound
+                else if (c == '+' || c == '-')
+                {
+                    if (j == (len - 1))
+                    {}
+                    else if (j == (len - 2) && isdigit(argv[i][j+1]))
+                    {}
+                    else
+                    {
+                        return false;
+                    }
+                }
                 // Return false for other cases
                 else
                 {
@@ -475,14 +487,27 @@ void analyze_compounds(char *argv[], int number, compound *type, int first)
             }
             else if (ch == '+')
             {
-
-                charge = atoi(&argv[i][j+1]);
-                break;
+                if (j == (len - 1))
+                {
+                    charge = 1;
+                }
+                else
+                {
+                    charge = atoi(&argv[i][j+1]);
+                    break;
+                }
             }
             else if (ch == '-')
             {
-                charge = -(atoi(&argv[i][j+1]));
-                break;
+                if (j == (len - 1))
+                {
+                    charge = -1;
+                }
+                else
+                {
+                    charge = -(atoi(&argv[i][j+1]));
+                    break;
+                }
             }
         }
 
@@ -500,7 +525,7 @@ void analyze_compounds(char *argv[], int number, compound *type, int first)
 
         printf("%s\n", atom);
         printf("%d\n", calculate_quantity(quantity, q, multiplier));
-        // printf("%d\n", charge);
+        printf("%d\n", charge);
     }
 }
 
