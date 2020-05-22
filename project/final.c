@@ -9,8 +9,15 @@
 // Default file with elements data
 #define DATAFILE "elements"
 
-// Linked list
+// Linked lists
+// Elements data
 node *elements = NULL;
+// List of elements to balance
+balance_node *to_balance = NULL;
+
+// Equation data
+equation *eqtn = NULL;
+
 
 int main(int argc, char *argv[])
 {
@@ -26,6 +33,9 @@ int main(int argc, char *argv[])
     int subs_number = 0, prod_number = 0;
     count_compounds(argc, argv, &subs_number, &prod_number);
 
+    // Count total number of compounds
+    int comp_number = subs_number + prod_number;
+
     // Load elements data to memory
     bool loaded = load(DATAFILE);
 
@@ -37,7 +47,7 @@ int main(int argc, char *argv[])
     }
 
     // Allocate memory for the equation data
-    equation *eqtn = malloc(sizeof(equation));
+    eqtn = malloc(sizeof(equation));
     eqtn->substrates = malloc(sizeof(compound) * subs_number);
     eqtn->products = malloc(sizeof(compound) * prod_number);
     eqtn->subs_coefficients = malloc(sizeof(int) * subs_number);
@@ -49,25 +59,58 @@ int main(int argc, char *argv[])
     // Load products
     analyze_compounds(argv, prod_number, eqtn->products, 2 * subs_number + 1);
 
-    // Print linked list
-    print_list();
+    printf("TEST\n");
 
-    node *cursor = eqtn->substrates[0].atoms[0].element;
-    printf("TEST\nElement: %s; type: %s;\n", cursor->element, cursor->type);
-    printf("Q: %d", eqtn->substrates[0].atoms[0].quantity);
+    // Prepare elements to balance in the correct order
+    for (int i = 0; i < (subs_number + prod_number); i++)
+    {
+        compound c = get_compound(i, subs_number);
+
+        for (int j = 0; j < c.atom_count; j++)
+        {
+            node *elem = c.atoms[j].element;
+            bool in_list = check_list(elem);
+            if (!in_list)
+            {
+                int occ = count_occurences(elem, subs_number, comp_number, i);
+
+                // TODO Add to the list in correct order
+
+                add_balance_node(elem, occ);
+
+                printf("%d\n", occ);
+                printf("%s\n\n", c.atoms[j].element->element);
+            }
+        }
+    }
+
+    // Print linked list
+    // print_list();
+
+    // node *cursor = eqtn->substrates[0].atoms[0].element;
+    // printf("TEST\nElement: %s; type: %s;\n", cursor->element, cursor->type);
+    // printf("Q: %d", eqtn->substrates[0].atoms[0].quantity);
 
     // Unload elements data from memory
     bool unloaded = unload();
 
     // Report error if data not unloaded
-    if (!unloaded )
+    if (!unloaded)
     {
         printf("Could not unload %s\n", DATAFILE);
         return 1;
     }
 
+    // Free memory for balance data
+    bool unloaded_balance = free_balance();
+    if (!unloaded_balance)
+    {
+        printf("Could not unload balance data");
+        return 1;
+    }
+
     // Free memory for equation data
-    bool unloaded_eqtn = unload_eqtn(eqtn);
+    bool unloaded_eqtn = unload_eqtn();
     if (!unloaded_eqtn)
     {
         printf("Could not unload equation data");
@@ -75,7 +118,7 @@ int main(int argc, char *argv[])
     }
 }
 
-bool unload_eqtn(equation *eqtn)
+bool unload_eqtn(void)
 {
     free(eqtn->substrates);
     free(eqtn->products);
@@ -199,6 +242,102 @@ bool add_node(char *line)
         elements = n;
     }
 
+    return true;
+}
+
+bool add_balance_node(node *elem, int occur)
+{
+    // Allocate memory for new node
+    balance_node *n = malloc(sizeof(balance_node));
+    if (n == NULL)
+    {
+        return false;
+    }
+
+    // Save data into the node
+    n->element_node = elem;
+    n->occurence = occur;
+    n->compound_numbers = malloc(sizeof(int) * occur);
+    n->coefficients_ratio = malloc(sizeof(int) * occur);
+
+    // TODO insert in correct order
+    // Insert node to the linked list
+    n->next = NULL;
+    if (to_balance != NULL)
+    {
+        balance_node *tmp = to_balance;
+        while (tmp->next != NULL)
+        {
+            tmp = tmp->next;
+        }
+        tmp->next = n;
+    }
+    else
+    {
+        to_balance = n;
+    }
+    return true;
+}
+
+bool check_list(node *elem)
+{
+    balance_node *cursor = to_balance;
+    while (cursor != NULL)
+    {
+        if (cursor->element_node == elem)
+        {
+            return true;
+        }
+        cursor = cursor->next;
+    }
+    return false;
+}
+
+compound get_compound(int comp_number, int subs_number)
+{
+    compound c;
+
+    if (comp_number < subs_number)
+        {
+            c = eqtn->substrates[comp_number];
+        }
+        else
+        {
+            c = eqtn->products[comp_number - subs_number];
+        }
+    return c;
+}
+
+int count_occurences(node *elem, int subs_number, int comp_number, int k)
+{
+    int counter = 0;
+    compound c;
+
+    for (int i = k; i < comp_number; i++)
+    {
+        c = get_compound(i, subs_number);
+
+        for (int j = 0; j < c.atom_count; j++)
+        {
+            if (elem == c.atoms[j].element)
+            {
+                counter++;
+            }
+        }
+    }
+    return counter;
+}
+
+bool free_balance(void)
+{
+    while (to_balance != NULL)
+    {
+        balance_node *t = to_balance->next;
+        free(to_balance->compound_numbers);
+        free(to_balance->coefficients_ratio);
+        free(to_balance);
+        to_balance = t;
+    }
     return true;
 }
 
@@ -424,8 +563,8 @@ void analyze_compounds(char *argv[], int number, compound *type, int first)
 
                     save_atom(atom, calculate_quantity(quantity, q, multiplier), &(type[n].atoms[m]));
 
-                    printf("%s\n", atom);
-                    printf("%d\n", calculate_quantity(quantity, q, multiplier));
+                    // printf("%s\n", atom);
+                    // printf("%d\n", calculate_quantity(quantity, q, multiplier));
 
                     q = 0;
                     m++;
@@ -448,8 +587,8 @@ void analyze_compounds(char *argv[], int number, compound *type, int first)
 
                     save_atom(atom, calculate_quantity(quantity, q, multiplier), &(type[n].atoms[m]));
 
-                    printf("%s\n", atom);
-                    printf("%d\n", calculate_quantity(quantity, q, multiplier));
+                    // printf("%s\n", atom);
+                    // printf("%d\n", calculate_quantity(quantity, q, multiplier));
 
                     a = 0;
                     q = 0;
@@ -470,8 +609,8 @@ void analyze_compounds(char *argv[], int number, compound *type, int first)
 
                 save_atom(atom, calculate_quantity(quantity, q, multiplier), &(type[n].atoms[m]));
 
-                printf("%s\n", atom);
-                printf("%d\n", calculate_quantity(quantity, q, multiplier));
+                // printf("%s\n", atom);
+                // printf("%d\n", calculate_quantity(quantity, q, multiplier));
 
                 a = 0;
                 q = 0;
@@ -522,10 +661,11 @@ void analyze_compounds(char *argv[], int number, compound *type, int first)
         save_atom(atom, calculate_quantity(quantity, q, multiplier), &(type[n].atoms[m]));
 
         type[n].charge = charge;
+        type[n].atom_count = m + 1;
 
-        printf("%s\n", atom);
-        printf("%d\n", calculate_quantity(quantity, q, multiplier));
-        printf("%d\n", charge);
+        // printf("%s\n", atom);
+        // printf("%d\n", calculate_quantity(quantity, q, multiplier));
+        // printf("%d\n", charge);
     }
 }
 
