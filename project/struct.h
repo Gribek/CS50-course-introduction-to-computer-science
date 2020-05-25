@@ -3,6 +3,7 @@ typedef struct node
 {
     char *element;
     char *type;
+    int balance_priority;
     struct node *next;
 }
 node;
