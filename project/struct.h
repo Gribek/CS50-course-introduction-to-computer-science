@@ -43,5 +43,6 @@ typedef struct balance_node
     int *compound_numbers;
     int *coefficients_ratio;
     struct balance_node *next;
+    struct balance_node *prev;
 }
 balance_node;

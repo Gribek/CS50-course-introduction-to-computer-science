@@ -59,8 +59,6 @@ int main(int argc, char *argv[])
     // Load products
     analyze_compounds(argv, prod_number, eqtn->products, 2 * subs_number + 1);
 
-    printf("TEST\n");
-
     // Prepare elements to balance in the correct order
     for (int i = 0; i < (subs_number + prod_number); i++)
     {
@@ -72,14 +70,11 @@ int main(int argc, char *argv[])
             bool in_list = check_list(elem);
             if (!in_list)
             {
+                // Count number of occurances in equation
                 int occ = count_occurences(elem, subs_number, comp_number, i);
 
-                // TODO Add to the list in correct order
-
+                // Add to the list in the correct order
                 add_balance_node(elem, occ);
-
-                printf("%d\n", occ);
-                printf("%s\n\n", c.atoms[j].element->element);
             }
         }
     }
@@ -128,6 +123,7 @@ bool unload_eqtn(void)
     return true;
 }
 
+// ELEMENT DATA - LINKED LIST
 // Load data into memory, returning true if successful else false
 bool load(const char *data_file)
 {
@@ -207,6 +203,7 @@ bool unload(void)
     return true;
 }
 
+// Add new node to the linked list
 bool add_node(char *line)
 {
     // Allocate memorey for new node
@@ -223,6 +220,8 @@ bool add_node(char *line)
     data = strtok(NULL, ",");
     n->type = malloc(strlen(data) + 1);
     strcpy(n->type, data);
+    data = strtok(NULL, ",");
+    n->balance_priority = (int) data;
 
     // Last node in linked list
     n->next = NULL;
@@ -245,6 +244,8 @@ bool add_node(char *line)
     return true;
 }
 
+// BALANCE DATA - LINKED LIST
+// Add new node to the linked list
 bool add_balance_node(node *elem, int occur)
 {
     // Allocate memory for new node
@@ -260,25 +261,55 @@ bool add_balance_node(node *elem, int occur)
     n->compound_numbers = malloc(sizeof(int) * occur);
     n->coefficients_ratio = malloc(sizeof(int) * occur);
 
-    // TODO insert in correct order
-    // Insert node to the linked list
-    n->next = NULL;
-    if (to_balance != NULL)
+    // Add first node of the list
+    if (to_balance ==  NULL)
     {
-        balance_node *tmp = to_balance;
-        while (tmp->next != NULL)
-        {
-            tmp = tmp->next;
-        }
-        tmp->next = n;
-    }
-    else
-    {
+        n->next = NULL;
+        n->prev = NULL;
         to_balance = n;
+        return true;
     }
+
+    // Create a cursor to traverse across the list
+    balance_node *cursor = to_balance;
+
+    // Insert node in the correct order
+    while (true)
+    {
+        //
+        if (n->element_node->balance_priority < cursor->element_node->balance_priority)
+        {
+            if (cursor->prev != NULL)
+            {
+                n->prev = cursor->prev;
+                cursor->prev->next = n;
+            }
+            else
+            {
+                n->prev = NULL;
+                to_balance = n;
+            }
+            n->next = cursor;
+            cursor->prev = n;
+            return true;
+        }
+
+        // Check if this is the last node
+        if (cursor->next == NULL)
+        {
+            break;
+        }
+        cursor = cursor->next;
+    }
+
+    // Add node at the end
+    n->next = NULL;
+    n->prev = cursor;
+    cursor->next = n;
     return true;
 }
 
+// Check if the element is in the list
 bool check_list(node *elem)
 {
     balance_node *cursor = to_balance;
