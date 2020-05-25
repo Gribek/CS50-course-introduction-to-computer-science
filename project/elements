@@ -1,10 +1,12 @@
-H
-He
-Li
-Be
-B
-C
-N
-O
-F
-Ne
+H,NM, 4
+He,NG, 2
+Li,M, 1
+Be,M, 1
+B,ML, 2
+C,NM, 3
+N,NM, 3
+O,NM, 4
+F,NM, 3
+Ne,NG, 2
+Na, M, 1
+S, NM, 3
