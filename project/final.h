@@ -5,6 +5,7 @@ bool unload(void);
 bool load(const char *data_file);
 bool add_node(char *line);
 bool add_balance_node(node *elem, int occur);
+bool check_priority(balance_node *n, balance_node *current);
 bool check_list(node *elem);
 compound get_compound(int comp_number, int subs_number);
 int count_occurences(node *elem, int subs_number, int comp_number, int k);

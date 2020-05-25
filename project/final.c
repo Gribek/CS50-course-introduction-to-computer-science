@@ -221,7 +221,7 @@ bool add_node(char *line)
     n->type = malloc(strlen(data) + 1);
     strcpy(n->type, data);
     data = strtok(NULL, ",");
-    n->balance_priority = (int) data;
+    n->balance_priority = atoi(data);
 
     // Last node in linked list
     n->next = NULL;
@@ -277,7 +277,7 @@ bool add_balance_node(node *elem, int occur)
     while (true)
     {
         //
-        if (n->element_node->balance_priority < cursor->element_node->balance_priority)
+        if (check_priority(n, cursor))
         {
             if (cursor->prev != NULL)
             {
@@ -307,6 +307,45 @@ bool add_balance_node(node *elem, int occur)
     n->prev = cursor;
     cursor->next = n;
     return true;
+}
+
+bool check_priority(balance_node *n, balance_node *current)
+{
+    // Calculate differences in priority and occurance
+    int prior_difference = n->element_node->balance_priority - current->element_node->balance_priority;
+    int occur_difference = n->occurence - current->occurence;
+
+    // Give priority in these situations
+    if (prior_difference < -2)
+    {
+        return true;
+    }
+
+    if (prior_difference == -2 && occur_difference < 2)
+    {
+        return true;
+    }
+
+    if (prior_difference == -1 && occur_difference < 1)
+    {
+        return true;
+    }
+
+    if (prior_difference == 0 && occur_difference < 0)
+    {
+        return true;
+    }
+    if (prior_difference == 1 && occur_difference < 0)
+    {
+        return true;
+    }
+    if (prior_difference == 2 && occur_difference < -1)
+    {
+        return true;
+    }
+
+    // Return false in other cases
+    return false;
 }
 
 // Check if the element is in the list
@@ -747,8 +786,8 @@ node *find(char *atom)
 // Print all data from linked list
 void print_list(void)
 {
-    for (node *cursor = elements; cursor != NULL; cursor = cursor->next)
+    for (balance_node *cursor = to_balance; cursor != NULL; cursor = cursor->next)
     {
-        printf("Element: %s; type: %s;\n", cursor->element, cursor->type);
+        printf("Element: %s\n", cursor->element_node->element);
     }
 }
