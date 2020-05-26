@@ -40,7 +40,7 @@ typedef struct balance_node
 {
     node *element_node;
     int occurence;
-    int *compound_numbers;
+    compound **compounds;
     int *coefficients_ratio;
     struct balance_node *next;
     struct balance_node *prev;
