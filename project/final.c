@@ -83,11 +83,11 @@ int main(int argc, char *argv[])
     // Prepare elements to balance in the correct order
     for (int i = 0; i < comp_number; i++)
     {
-        compound c = get_compound(i, subs_number);
+        compound *c = get_compound(i, subs_number);
 
-        for (int j = 0; j < c.atom_count; j++)
+        for (int j = 0; j < c->atom_count; j++)
         {
-            node *elem = c.atoms[j].element;
+            node *elem = c->atoms[j].element;
             bool in_list = check_list(elem);
             if (!in_list)
             {
@@ -105,8 +105,8 @@ int main(int argc, char *argv[])
                     return 1;
                 }
 
-                // Set compound_numbers value in the node
-                set_compound_numbers(p, occ, elem, subs_number, comp_number, i);
+                // Set pointers to compounds in the node
+                set_compounds(p, occ, elem, subs_number, comp_number, i);
             }
         }
     }
@@ -295,9 +295,9 @@ bool add_balance_node(node *elem, int occur, balance_node **p)
     n->occurence = occur;
 
     // Allocate memory for node data
-    n->compound_numbers = malloc(sizeof(int) * occur);
+    n->compounds = malloc(sizeof(compound *) * occur);
     n->coefficients_ratio = malloc(sizeof(int) * occur);
-    if (n->compound_numbers == NULL || n->coefficients_ratio == NULL)
+    if (n->compounds == NULL || n->coefficients_ratio == NULL)
     {
         return false;
     }
@@ -405,17 +405,17 @@ bool check_list(node *elem)
     return false;
 }
 
-compound get_compound(int comp_number, int subs_number)
+compound *get_compound(int comp_number, int subs_number)
 {
-    compound c;
+    compound *c;
 
     if (comp_number < subs_number)
         {
-            c = eqtn->substrates[comp_number];
+            c = &(eqtn->substrates[comp_number]);
         }
         else
         {
-            c = eqtn->products[comp_number - subs_number];
+            c = &(eqtn->products[comp_number - subs_number]);
         }
     return c;
 }
@@ -423,15 +423,14 @@ compound get_compound(int comp_number, int subs_number)
 int count_occurences(node *elem, int subs_number, int comp_number, int k)
 {
     int counter = 0;
-    compound c;
 
     for (int i = k; i < comp_number; i++)
     {
-        c = get_compound(i, subs_number);
+        compound *c = get_compound(i, subs_number);
 
-        for (int j = 0; j < c.atom_count; j++)
+        for (int j = 0; j < c->atom_count; j++)
         {
-            if (elem == c.atoms[j].element)
+            if (elem == c->atoms[j].element)
             {
                 counter++;
                 break;
@@ -441,17 +440,17 @@ int count_occurences(node *elem, int subs_number, int comp_number, int k)
     return counter;
 }
 
-void set_compound_numbers(balance_node *p, int occ, node *elem, int subs_number, int comp_number, int k)
+void set_compounds(balance_node *p, int occ, node *elem, int subs_number, int comp_number, int k)
 {
     for (int i = k, m = 0; i < comp_number; i++)
     {
-        compound c = get_compound(i, subs_number);
+        compound *c = get_compound(i, subs_number);
 
-        for (int j = 0; j < c.atom_count; j++)
+        for (int j = 0; j < c->atom_count; j++)
         {
-            if (elem == c.atoms[j].element)
+            if (elem == c->atoms[j].element)
             {
-                p->compound_numbers[m] = i;
+                p->compounds[m] = c;
                 m++;
                 break;
             }
@@ -469,7 +468,7 @@ bool free_balance(void)
     while (to_balance != NULL)
     {
         balance_node *t = to_balance->next;
-        free(to_balance->compound_numbers);
+        free(to_balance->compounds);
         free(to_balance->coefficients_ratio);
         free(to_balance);
         to_balance = t;
