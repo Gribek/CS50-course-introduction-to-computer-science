@@ -48,10 +48,31 @@ int main(int argc, char *argv[])
 
     // Allocate memory for the equation data
     eqtn = malloc(sizeof(equation));
+    if (eqtn == NULL)
+    {
+        printf("Could not allocate memmory\n");
+        return 1;
+    }
     eqtn->substrates = malloc(sizeof(compound) * subs_number);
     eqtn->products = malloc(sizeof(compound) * prod_number);
     eqtn->subs_coefficients = malloc(sizeof(int) * subs_number);
     eqtn->prod_coefficients = malloc(sizeof(int) * prod_number);
+    if (eqtn->substrates == NULL || eqtn->products == NULL ||
+        eqtn->subs_coefficients == NULL || eqtn->prod_coefficients == NULL)
+    {
+        printf("Could not allocate memmory\n");
+        return 1;
+    }
+
+    // Assign coefficients to 1
+    for (int i =0; i < subs_number; i++)
+    {
+        eqtn->subs_coefficients[i] = 0;
+    }
+    for (int i =0; i < prod_number; i++)
+    {
+        eqtn->prod_coefficients[i] = 0;
+    }
 
     // Load substrates
     analyze_compounds(argv, subs_number, eqtn->substrates, 1);
@@ -60,7 +81,7 @@ int main(int argc, char *argv[])
     analyze_compounds(argv, prod_number, eqtn->products, 2 * subs_number + 1);
 
     // Prepare elements to balance in the correct order
-    for (int i = 0; i < (subs_number + prod_number); i++)
+    for (int i = 0; i < comp_number; i++)
     {
         compound c = get_compound(i, subs_number);
 
@@ -73,8 +94,19 @@ int main(int argc, char *argv[])
                 // Count number of occurances in equation
                 int occ = count_occurences(elem, subs_number, comp_number, i);
 
-                // Add to the list in the correct order
-                add_balance_node(elem, occ);
+                // Declare pointer to the new node
+                balance_node *p = NULL;
+
+                // Add node to the list in the correct order
+                bool added = add_balance_node(elem, occ, &p);
+                if (!added)
+                {
+                    printf("Could not allocate memmory\n");
+                    return 1;
+                }
+
+                // Set compound_numbers value in the node
+                set_compound_numbers(p, occ, elem, subs_number, comp_number, i);
             }
         }
     }
@@ -246,7 +278,7 @@ bool add_node(char *line)
 
 // BALANCE DATA - LINKED LIST
 // Add new node to the linked list
-bool add_balance_node(node *elem, int occur)
+bool add_balance_node(node *elem, int occur, balance_node **p)
 {
     // Allocate memory for new node
     balance_node *n = malloc(sizeof(balance_node));
@@ -255,11 +287,21 @@ bool add_balance_node(node *elem, int occur)
         return false;
     }
 
+    // Save address of the node
+    *p = n;
+
     // Save data into the node
     n->element_node = elem;
     n->occurence = occur;
+
+    // Allocate memory for node data
     n->compound_numbers = malloc(sizeof(int) * occur);
     n->coefficients_ratio = malloc(sizeof(int) * occur);
+    if (n->compound_numbers == NULL || n->coefficients_ratio == NULL)
+    {
+        return false;
+    }
+
 
     // Add first node of the list
     if (to_balance ==  NULL)
@@ -392,10 +434,34 @@ int count_occurences(node *elem, int subs_number, int comp_number, int k)
             if (elem == c.atoms[j].element)
             {
                 counter++;
+                break;
             }
         }
     }
     return counter;
+}
+
+void set_compound_numbers(balance_node *p, int occ, node *elem, int subs_number, int comp_number, int k)
+{
+    for (int i = k, m = 0; i < comp_number; i++)
+    {
+        compound c = get_compound(i, subs_number);
+
+        for (int j = 0; j < c.atom_count; j++)
+        {
+            if (elem == c.atoms[j].element)
+            {
+                p->compound_numbers[m] = i;
+                m++;
+                break;
+            }
+        }
+
+        if (m == occ)
+        {
+            break;
+        }
+    }
 }
 
 bool free_balance(void)
