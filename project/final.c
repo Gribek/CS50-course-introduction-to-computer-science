@@ -67,11 +67,11 @@ int main(int argc, char *argv[])
     // Assign coefficients to 1
     for (int i =0; i < subs_number; i++)
     {
-        eqtn->subs_coefficients[i] = 0;
+        eqtn->subs_coefficients[i] = 1;
     }
     for (int i =0; i < prod_number; i++)
     {
-        eqtn->prod_coefficients[i] = 0;
+        eqtn->prod_coefficients[i] = 1;
     }
 
     // Load substrates
@@ -109,6 +109,15 @@ int main(int argc, char *argv[])
                 set_balance_data(p, occ, elem, subs_number, comp_number, i);
             }
         }
+    }
+
+    if (check_balance(subs_number))
+    {
+        printf("BALANCED\n");
+    }
+    else
+    {
+        printf("NOT BALANCED\n");
     }
 
     // Print linked list
@@ -476,6 +485,50 @@ bool free_balance(void)
         free(to_balance);
         to_balance = t;
     }
+    return true;
+}
+
+bool check_balance(int subs_number)
+{
+    // Create a cursor to traverse the list
+    balance_node *cursor = to_balance;
+    // Initialize variables
+    int subs_side, prod_side, coeff;
+
+    // Loop through all elements
+    while (cursor != NULL)
+    {
+        // Reset element counters
+        subs_side = 0, prod_side = 0;
+
+        // Count amount of element on both side of the equation
+        for (int i = 0; i < cursor->occurence; i++)
+        {
+            int comp_number = cursor->compound_numbers[i];
+
+            if (comp_number < subs_number)
+            {
+                coeff = eqtn->subs_coefficients[comp_number];
+                subs_side += coeff * cursor->atom_quantity[i];
+            }
+            else
+            {
+                coeff = eqtn->prod_coefficients[comp_number - subs_number];
+                prod_side += coeff * cursor->atom_quantity[i];
+            }
+        }
+
+        // If amounts not equal return false
+        if (subs_side != prod_side)
+        {
+            return false;
+        }
+
+        // Go to the next element
+        cursor = cursor->next;
+    }
+
+    // When all elements are in balance return true
     return true;
 }
 
