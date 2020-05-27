@@ -105,8 +105,8 @@ int main(int argc, char *argv[])
                     return 1;
                 }
 
-                // Set pointers to compounds in the node
-                set_compounds(p, occ, elem, subs_number, comp_number, i);
+                // Set compound numbers in the node
+                set_balance_data(p, occ, elem, subs_number, comp_number, i);
             }
         }
     }
@@ -295,9 +295,10 @@ bool add_balance_node(node *elem, int occur, balance_node **p)
     n->occurence = occur;
 
     // Allocate memory for node data
-    n->compounds = malloc(sizeof(compound *) * occur);
+    n->compound_numbers = malloc(sizeof(int) * occur);
+    n->atom_quantity = malloc(sizeof(int) * occur);
     n->coefficients_ratio = malloc(sizeof(int) * occur);
-    if (n->compounds == NULL || n->coefficients_ratio == NULL)
+    if (n->compound_numbers == NULL || n->coefficients_ratio == NULL)
     {
         return false;
     }
@@ -440,7 +441,7 @@ int count_occurences(node *elem, int subs_number, int comp_number, int k)
     return counter;
 }
 
-void set_compounds(balance_node *p, int occ, node *elem, int subs_number, int comp_number, int k)
+void set_balance_data(balance_node *p, int occ, node *elem, int subs_number, int comp_number, int k)
 {
     for (int i = k, m = 0; i < comp_number; i++)
     {
@@ -450,7 +451,8 @@ void set_compounds(balance_node *p, int occ, node *elem, int subs_number, int co
         {
             if (elem == c->atoms[j].element)
             {
-                p->compounds[m] = c;
+                p->compound_numbers[m] = i;
+                p->atom_quantity[m] = c->atoms[j].quantity;
                 m++;
                 break;
             }
@@ -468,8 +470,9 @@ bool free_balance(void)
     while (to_balance != NULL)
     {
         balance_node *t = to_balance->next;
-        free(to_balance->compounds);
+        free(to_balance->compound_numbers);
         free(to_balance->coefficients_ratio);
+        free(to_balance->atom_quantity);
         free(to_balance);
         to_balance = t;
     }
