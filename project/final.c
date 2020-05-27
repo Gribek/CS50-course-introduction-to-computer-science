@@ -111,7 +111,18 @@ int main(int argc, char *argv[])
         }
     }
 
-    if (check_balance(subs_number))
+    balance_node *next = NULL;
+
+    while (!check_balance(subs_number, &next))
+    {
+        balance_element(next, subs_number);
+    }
+
+    // check_balance(subs_number, &next);
+
+    // balance_element(next, subs_number);
+
+    if (check_balance(subs_number, &next))
     {
         printf("BALANCED\n");
     }
@@ -488,7 +499,9 @@ bool free_balance(void)
     return true;
 }
 
-bool check_balance(int subs_number)
+// BALANCING FUNCTIONS
+// Check if the equation is balanced
+bool check_balance(int subs_number, balance_node **next_elem)
 {
     // Create a cursor to traverse the list
     balance_node *cursor = to_balance;
@@ -521,6 +534,7 @@ bool check_balance(int subs_number)
         // If amounts not equal return false
         if (subs_side != prod_side)
         {
+            *next_elem = cursor;
             return false;
         }
 
@@ -530,6 +544,59 @@ bool check_balance(int subs_number)
 
     // When all elements are in balance return true
     return true;
+}
+
+// Balance the selected element
+void balance_element(balance_node *elem, int subs_number)
+{
+    int coeff, subs_side = 0, prod_side = 0;
+
+    for (int i = 0; i < elem->occurence; i++)
+    {
+        int comp_number = elem->compound_numbers[i];
+
+        if (comp_number < subs_number)
+        {
+            coeff = eqtn->subs_coefficients[comp_number];
+            subs_side += coeff * elem->atom_quantity[i];
+        }
+        else
+        {
+            coeff = eqtn->prod_coefficients[comp_number - subs_number];
+            prod_side += coeff * elem->atom_quantity[i];
+        }
+    }
+
+    int lcm = find_lcm(subs_side, prod_side);
+
+    for (int i = 0; i < elem->occurence; i++)
+    {
+        int comp_number = elem->compound_numbers[i];
+
+        if (comp_number < subs_number)
+        {
+            eqtn->subs_coefficients[comp_number] *= (lcm / subs_side);
+        }
+        else
+        {
+            eqtn->prod_coefficients[comp_number - subs_number] *= (lcm / prod_side);
+        }
+    }
+}
+
+int find_lcm(int num1, int num2)
+{
+    int higher_num = (num1 > num2) ? num1 : num2;
+    int value = higher_num;
+
+    while(1)
+    {
+        if (value % num1 == 0 && value % num2 == 0)
+        {
+            return value;
+        }
+        value += higher_num;
+    }
 }
 
 bool check_equation(int argc, char *argv[])
