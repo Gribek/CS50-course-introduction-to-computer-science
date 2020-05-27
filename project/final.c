@@ -117,11 +117,11 @@ int main(int argc, char *argv[])
     }
     else
     {
-        printf("NOT BALANCED\n");
+        printf("NOT BALANCED!\n");
     }
 
-    // Print linked list
-    // print_list();
+    // Print a balanced equation
+    print_equation(argc, argv, subs_number);
 
     // node *cursor = eqtn->substrates[0].atoms[0].element;
     // printf("TEST\nElement: %s; type: %s;\n", cursor->element, cursor->type);
@@ -904,11 +904,34 @@ node *find(char *atom)
     return NULL;
 }
 
-// Print all data from linked list
-void print_list(void)
+// Print an equation with coefficients
+void print_equation(int argc, char *argv[], int subs)
 {
-    for (balance_node *cursor = to_balance; cursor != NULL; cursor = cursor->next)
+    // Compound coefficient
+    int coeff;
+
+    // Loop through all parts of the equation and print them
+    for (int i = 1, j = 0; i < argc; i++)
     {
-        printf("Element: %s\n", cursor->element_node->element);
+        if (i % 2 == 0)
+        {
+            printf("%s ", argv[i]);
+        }
+        else
+        {
+            if (j < subs)
+            {
+                coeff = eqtn->subs_coefficients[j];
+            }
+            else
+            {
+                coeff = eqtn->prod_coefficients[j - subs];
+            }
+            printf("%d%s ", coeff, argv[i]);
+            j++;
+        }
     }
+
+    // Add new line
+    printf("\n");
 }
