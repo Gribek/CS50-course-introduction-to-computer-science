@@ -91,8 +91,8 @@ int main(int argc, char *argv[])
             bool in_list = check_list(elem);
             if (!in_list)
             {
-                // Count number of occurances in equation
-                int occ = count_occurences(elem, subs_number, comp_number, i);
+                // Count number of occurrences in equation
+                int occ = count_occurrences(elem, subs_number, comp_number, i);
 
                 // Declare pointer to the new node
                 balance_node *p = NULL;
@@ -312,7 +312,7 @@ bool add_balance_node(node *elem, int occur, balance_node **p)
 
     // Save data into the node
     n->element_node = elem;
-    n->occurence = occur;
+    n->occurrence = occur;
 
     // Allocate memory for node data
     n->compound_numbers = malloc(sizeof(int) * occur);
@@ -374,9 +374,9 @@ bool add_balance_node(node *elem, int occur, balance_node **p)
 
 bool check_priority(balance_node *n, balance_node *current)
 {
-    // Calculate differences in priority and occurance
+    // Calculate differences in priority and occurrence
     int prior_difference = n->element_node->balance_priority - current->element_node->balance_priority;
-    int occur_difference = n->occurence - current->occurence;
+    int occur_difference = n->occurrence - current->occurrence;
 
     // Give priority in these situations
     if (prior_difference < -2)
@@ -441,7 +441,7 @@ compound *get_compound(int comp_number, int subs_number)
     return c;
 }
 
-int count_occurences(node *elem, int subs_number, int comp_number, int k)
+int count_occurrences(node *elem, int subs_number, int comp_number, int k)
 {
     int counter = 0;
 
@@ -515,7 +515,7 @@ bool check_balance(int subs_number, balance_node **next_elem)
         subs_side = 0, prod_side = 0;
 
         // Count amount of element on both side of the equation
-        for (int i = 0; i < cursor->occurence; i++)
+        for (int i = 0; i < cursor->occurrence; i++)
         {
             int comp_number = cursor->compound_numbers[i];
 
@@ -551,7 +551,7 @@ void balance_element(balance_node *elem, int subs_number)
 {
     int coeff, subs_side = 0, prod_side = 0;
 
-    for (int i = 0; i < elem->occurence; i++)
+    for (int i = 0; i < elem->occurrence; i++)
     {
         int comp_number = elem->compound_numbers[i];
 
@@ -569,7 +569,7 @@ void balance_element(balance_node *elem, int subs_number)
 
     int lcm = find_lcm(subs_side, prod_side);
 
-    for (int i = 0; i < elem->occurence; i++)
+    for (int i = 0; i < elem->occurrence; i++)
     {
         int comp_number = elem->compound_numbers[i];
 

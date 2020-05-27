@@ -39,7 +39,7 @@ equation;
 typedef struct balance_node
 {
     node *element_node;
-    int occurence;
+    int occurrence;
     int *compound_numbers;
     int *atom_quantity;
     int *coefficients_ratio;

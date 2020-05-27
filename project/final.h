@@ -8,7 +8,7 @@ bool add_balance_node(node *elem, int occur, balance_node **p);
 bool check_priority(balance_node *n, balance_node *current);
 bool check_list(node *elem);
 compound *get_compound(int comp_number, int subs_number);
-int count_occurences(node *elem, int subs_number, int comp_number, int k);
+int count_occurrences(node *elem, int subs_number, int comp_number, int k);
 void set_balance_data(balance_node *p, int occ, node *elem, int subs_number, int comp_number, int k);
 bool free_balance(void);
 bool check_balance(int subs_number, balance_node **next_elem);
