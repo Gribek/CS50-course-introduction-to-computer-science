@@ -65,11 +65,11 @@ int main(int argc, char *argv[])
     }
 
     // Assign coefficients to 1
-    for (int i =0; i < subs_number; i++)
+    for (int i = 0; i < subs_number; i++)
     {
         eqtn->subs_coefficients[i] = 1;
     }
-    for (int i =0; i < prod_number; i++)
+    for (int i = 0; i < prod_number; i++)
     {
         eqtn->prod_coefficients[i] = 1;
     }
@@ -111,16 +111,15 @@ int main(int argc, char *argv[])
         }
     }
 
+    // Poiter to the next element that needs balancing
     balance_node *next = NULL;
 
+    // Keep checking if the equation is balanced
     while (!check_balance(subs_number, &next))
     {
+        // Balance the selected element
         balance_element(next, subs_number);
     }
-
-    // check_balance(subs_number, &next);
-
-    // balance_element(next, subs_number);
 
     if (check_balance(subs_number, &next))
     {
@@ -515,21 +514,7 @@ bool check_balance(int subs_number, balance_node **next_elem)
         subs_side = 0, prod_side = 0;
 
         // Count amount of element on both side of the equation
-        for (int i = 0; i < cursor->occurrence; i++)
-        {
-            int comp_number = cursor->compound_numbers[i];
-
-            if (comp_number < subs_number)
-            {
-                coeff = eqtn->subs_coefficients[comp_number];
-                subs_side += coeff * cursor->atom_quantity[i];
-            }
-            else
-            {
-                coeff = eqtn->prod_coefficients[comp_number - subs_number];
-                prod_side += coeff * cursor->atom_quantity[i];
-            }
-        }
+        count_amount(cursor, subs_number, &subs_side, &prod_side);
 
         // If amounts not equal return false
         if (subs_side != prod_side)
@@ -546,29 +531,130 @@ bool check_balance(int subs_number, balance_node **next_elem)
     return true;
 }
 
-// Balance the selected element
 void balance_element(balance_node *elem, int subs_number)
 {
-    int coeff, subs_side = 0, prod_side = 0;
+    if(elem->occurrence == 2)
+    {
+        balance_two(elem, subs_number);
+    }
+    else
+    {
+        balance_multiple(elem, subs_number);
+    }
+}
 
-    for (int i = 0; i < elem->occurrence; i++)
+void balance_multiple(balance_node *elem, int subs_number)
+{
+    int occ = elem->occurrence;
+    int n, coeffs[occ], quantities[occ], sums[occ];
+
+    for (int i = 0; i < occ; i++)
     {
         int comp_number = elem->compound_numbers[i];
 
         if (comp_number < subs_number)
         {
-            coeff = eqtn->subs_coefficients[comp_number];
-            subs_side += coeff * elem->atom_quantity[i];
+            coeffs[i] = eqtn->subs_coefficients[comp_number];
+            n = i;
         }
         else
         {
-            coeff = eqtn->prod_coefficients[comp_number - subs_number];
-            prod_side += coeff * elem->atom_quantity[i];
+            coeffs[i] = eqtn->prod_coefficients[comp_number - subs_number];
+        }
+
+        quantities[i] = elem->atom_quantity[i];
+        sums[i] = coeffs[i] * quantities[i];
+    }
+
+    bool subs_low;
+    int start, end, lowest;
+
+    while (!sides_equal(occ, sums, n, &subs_low))
+    {
+        if (subs_low)
+        {
+            lowest = 0;
+            start = 1, end = n + 1;
+        }
+        else
+        {
+            lowest = n + 1;
+            start = n + 2, end = occ;
+        }
+
+        for (int i = start; i < end; i++)
+        {
+            if (sums[lowest] > sums[i])
+            {
+                lowest = i;
+            }
+            else if (sums[lowest] == sums[i])
+            {
+                lowest = (quantities[lowest] < quantities[i]) ? lowest : i;
+            }
+        }
+        coeffs[lowest] += 1;
+        sums[lowest] = coeffs[lowest] * quantities[lowest];
+    }
+
+    for (int i = 0; i < occ; i++)
+    {
+        int comp_number = elem->compound_numbers[i];
+
+        if (comp_number < subs_number)
+        {
+            eqtn->subs_coefficients[comp_number] = coeffs[i];
+        }
+        else
+        {
+            eqtn->prod_coefficients[comp_number - subs_number] = coeffs[i];
+        }
+    }
+}
+
+bool sides_equal(int n, int sums[], int last_substrate, bool *subs_low)
+{
+    int subs_side = 0, prod_side = 0;
+    for (int i = 0; i < n; i++)
+    {
+        if (i <= last_substrate)
+        {
+            subs_side += sums[i];
+        }
+        else
+        {
+            prod_side += sums[i];
         }
     }
 
+    if (subs_side == prod_side)
+    {
+        return true;
+    }
+    else if (subs_side < prod_side)
+    {
+        *subs_low = true;
+        return false;
+    }
+    else
+    {
+        *subs_low = false;
+        return false;
+    }
+}
+
+// Balance the selected element
+void balance_two(balance_node *elem, int subs_number)
+{
+    int subs_side = 0, prod_side = 0;
+
+    // Count amount of element on both sides of equation
+    count_amount(elem, subs_number, &subs_side, &prod_side);
+
+    // Find LCM of both numbers
     int lcm = find_lcm(subs_side, prod_side);
 
+    // Set new coefficients values
     for (int i = 0; i < elem->occurrence; i++)
     {
         int comp_number = elem->compound_numbers[i];
@@ -580,6 +666,26 @@ void balance_element(balance_node *elem, int subs_number)
         else
         {
             eqtn->prod_coefficients[comp_number - subs_number] *= (lcm / prod_side);
+        }
+    }
+}
+
+// Count the amount of selected atom on both sides of the equation
+void count_amount(balance_node *p, int subs_number, int *subs_side, int *prod_side)
+{
+    for (int i = 0; i < p->occurrence; i++)
+    {
+        int comp_number = p->compound_numbers[i];
+
+        if (comp_number < subs_number)
+        {
+            int coeff = eqtn->subs_coefficients[comp_number];
+            *subs_side += coeff * p->atom_quantity[i];
+        }
+        else
+        {
+            int coeff = eqtn->prod_coefficients[comp_number - subs_number];
+            *prod_side += coeff * p->atom_quantity[i];
         }
     }
 }
@@ -599,6 +705,8 @@ int find_lcm(int num1, int num2)
     }
 }
 
+// INPUT VALIDATION
+// Check if equation is entered correctly
 bool check_equation(int argc, char *argv[])
 {
     // Check for correct number of arguments

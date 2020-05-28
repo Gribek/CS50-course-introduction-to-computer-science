@@ -13,6 +13,10 @@ void set_balance_data(balance_node *p, int occ, node *elem, int subs_number, int
 bool free_balance(void);
 bool check_balance(int subs_number, balance_node **next_elem);
 void balance_element(balance_node *elem, int subs_number);
+void balance_multiple(balance_node *elem, int subs_number);
+bool sides_equal(int n, int sums[], int last_substrate, bool *subs_low);
+void balance_two(balance_node *elem, int subs_number);
+void count_amount(balance_node *p, int subs_number, int *subs_side, int *prod_side);
 int find_lcm(int num1, int num2);
 node *find(char *elem);
 bool check_equation(int argc, char *argv[]);
