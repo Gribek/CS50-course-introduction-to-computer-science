@@ -249,7 +249,6 @@ bool unload(void)
     {
         node *t = elements->next;
         free(elements->element);
-        free(elements->type);
         free(elements);
         elements = t;
     }
@@ -270,9 +269,6 @@ bool add_node(char *line)
     char *data = strtok(line, ",");
     n->element = malloc(strlen(data) + 1);
     strcpy(n->element, data);
-    data = strtok(NULL, ",");
-    n->type = malloc(strlen(data) + 1);
-    strcpy(n->type, data);
     data = strtok(NULL, ",");
     n->balance_priority = atoi(data);
 
