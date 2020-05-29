@@ -135,10 +135,6 @@ int main(int argc, char *argv[])
     // Print a balanced equation
     print_equation(argc, argv, subs_number);
 
-    // node *cursor = eqtn->substrates[0].atoms[0].element;
-    // printf("TEST\nElement: %s; type: %s;\n", cursor->element, cursor->type);
-    // printf("Q: %d", eqtn->substrates[0].atoms[0].quantity);
-
     // Unload elements data from memory
     bool unloaded = unload();
 
@@ -1028,10 +1024,6 @@ void analyze_compounds(char *argv[], int number, compound *type, int first)
         save_atom(atom, calculate_quantity(quantity, q, multiplier), &(type[n].atoms[m]));
 
         type[n].atom_count = m + 1;
-
-        // printf("%s\n", atom);
-        // printf("%d\n", calculate_quantity(quantity, q, multiplier));
-        // printf("%d\n", charge);
     }
 }
 
