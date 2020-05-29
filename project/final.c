@@ -80,6 +80,8 @@ int main(int argc, char *argv[])
     // Load products
     analyze_compounds(argv, prod_number, eqtn->products, 2 * subs_number + 1);
 
+    equation x = *eqtn;
+
     // Prepare elements to balance in the correct order
     for (int i = 0; i < comp_number; i++)
     {
@@ -1016,8 +1018,11 @@ void analyze_compounds(char *argv[], int number, compound *type, int first)
             }
         }
 
+        type[n].charge = charge;
+
         if (a == 0)
         {
+            type[n].atom_count = m;
             continue;
         }
 
@@ -1026,7 +1031,6 @@ void analyze_compounds(char *argv[], int number, compound *type, int first)
 
         save_atom(atom, calculate_quantity(quantity, q, multiplier), &(type[n].atoms[m]));
 
-        type[n].charge = charge;
         type[n].atom_count = m + 1;
 
         // printf("%s\n", atom);
