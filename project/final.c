@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <ctype.h>
 
+// Function prototypes & struct definitions
 #include "final.h"
 
 // Default file with elements data
@@ -80,17 +81,22 @@ int main(int argc, char *argv[])
     // Load products
     analyze_compounds(argv, prod_number, eqtn->products, 2 * subs_number + 1);
 
-    equation x = *eqtn;
-
     // Prepare elements to balance in the correct order
     for (int i = 0; i < comp_number; i++)
     {
+        // Get current compound
         compound *c = get_compound(i, subs_number);
 
+        // Loop through the atoms
         for (int j = 0; j < c->atom_count; j++)
         {
+            // Get current atom
             node *elem = c->atoms[j].element;
+
+            // Check if element is in balance list
             bool in_list = check_list(elem);
+
+            // Add element to balance list if not present
             if (!in_list)
             {
                 // Count number of occurrences in equation
@@ -123,15 +129,6 @@ int main(int argc, char *argv[])
         balance_element(next, subs_number);
     }
 
-    if (check_balance(subs_number, &next))
-    {
-        printf("BALANCED\n");
-    }
-    else
-    {
-        printf("NOT BALANCED!\n");
-    }
-
     // Print a balanced equation
     print_equation(argc, argv, subs_number);
 
@@ -160,16 +157,6 @@ int main(int argc, char *argv[])
         printf("Could not unload equation data");
         return 1;
     }
-}
-
-bool unload_eqtn(void)
-{
-    free(eqtn->substrates);
-    free(eqtn->products);
-    free(eqtn->subs_coefficients);
-    free(eqtn->prod_coefficients);
-    free(eqtn);
-    return true;
 }
 
 // ELEMENT DATA - LINKED LIST
@@ -332,9 +319,10 @@ bool add_balance_node(node *elem, int occur, balance_node **p)
     // Insert node in the correct order
     while (true)
     {
-        //
+        // Check if thi is right place for new node
         if (check_priority(n, cursor))
         {
+            // Inser new balance node
             if (cursor->prev != NULL)
             {
                 n->prev = cursor->prev;
@@ -365,6 +353,7 @@ bool add_balance_node(node *elem, int occur, balance_node **p)
     return true;
 }
 
+// Compare two balance nodes, return true if new node has priority else false
 bool check_priority(balance_node *n, balance_node *current)
 {
     // Calculate differences in priority and occurrence
@@ -407,9 +396,13 @@ bool check_priority(balance_node *n, balance_node *current)
 // Check if the element is in the list
 bool check_list(node *elem)
 {
+    // Create cursor to traverse through the list
     balance_node *cursor = to_balance;
+
+    // Loop througt the list
     while (cursor != NULL)
     {
+        // Check if elements are the same
         if (cursor->element_node == elem)
         {
             return true;
@@ -419,49 +412,19 @@ bool check_list(node *elem)
     return false;
 }
 
-compound *get_compound(int comp_number, int subs_number)
-{
-    compound *c;
-
-    if (comp_number < subs_number)
-        {
-            c = &(eqtn->substrates[comp_number]);
-        }
-        else
-        {
-            c = &(eqtn->products[comp_number - subs_number]);
-        }
-    return c;
-}
-
-int count_occurrences(node *elem, int subs_number, int comp_number, int k)
-{
-    int counter = 0;
-
-    for (int i = k; i < comp_number; i++)
-    {
-        compound *c = get_compound(i, subs_number);
-
-        for (int j = 0; j < c->atom_count; j++)
-        {
-            if (elem == c->atoms[j].element)
-            {
-                counter++;
-                break;
-            }
-        }
-    }
-    return counter;
-}
-
+// Prepare and save data to the new balnce node
 void set_balance_data(balance_node *p, int occ, node *elem, int subs_number, int comp_number, int k)
 {
+    // Loop through all compounds
     for (int i = k, m = 0; i < comp_number; i++)
     {
+        // Get next compound
         compound *c = get_compound(i, subs_number);
 
+        // Look for the element in question
         for (int j = 0; j < c->atom_count; j++)
         {
+            // Save data if element is in current compound
             if (elem == c->atoms[j].element)
             {
                 p->compound_numbers[m] = i;
@@ -471,6 +434,7 @@ void set_balance_data(balance_node *p, int occ, node *elem, int subs_number, int
             }
         }
 
+        // Quit afer identifying all compounds where element is present
         if (m == occ)
         {
             break;
@@ -478,6 +442,7 @@ void set_balance_data(balance_node *p, int occ, node *elem, int subs_number, int
     }
 }
 
+// Free memory for balance list, return true if successful
 bool free_balance(void)
 {
     while (to_balance != NULL)
@@ -491,6 +456,8 @@ bool free_balance(void)
     }
     return true;
 }
+
+
 
 // BALANCING FUNCTIONS
 // Check if the equation is balanced
@@ -525,23 +492,29 @@ bool check_balance(int subs_number, balance_node **next_elem)
     return true;
 }
 
+// Balance the element depending on the number of occurrences in the equation
 void balance_element(balance_node *elem, int subs_number)
 {
+    // Element occurring in two compounds
     if(elem->occurrence == 2)
     {
         balance_two(elem, subs_number);
     }
+    // Element occurring in more than two compounds
     else
     {
         balance_multiple(elem, subs_number);
     }
 }
 
+// Balance element occurring in more than two compounds
 void balance_multiple(balance_node *elem, int subs_number)
 {
+    // Prepare arrays to store atoms data
     int occ = elem->occurrence;
     int n, coeffs[occ], quantities[occ], sums[occ];
 
+    // Copy data to arrays
     for (int i = 0; i < occ; i++)
     {
         int comp_number = elem->compound_numbers[i];
@@ -560,9 +533,11 @@ void balance_multiple(balance_node *elem, int subs_number)
         sums[i] = coeffs[i] * quantities[i];
     }
 
+    // Variables to track balance process
     bool subs_low;
     int start, end, lowest;
 
+    // Balance quantity of elements on both sides
     while (!sides_equal(occ, sums, n, &subs_low))
     {
         if (subs_low)
@@ -591,6 +566,7 @@ void balance_multiple(balance_node *elem, int subs_number)
         sums[lowest] = coeffs[lowest] * quantities[lowest];
     }
 
+    // Save coefficients in the equation data
     for (int i = 0; i < occ; i++)
     {
         int comp_number = elem->compound_numbers[i];
@@ -606,9 +582,13 @@ void balance_multiple(balance_node *elem, int subs_number)
     }
 }
 
+// Check if number of atoms are the same on both side of the equation
 bool sides_equal(int n, int sums[], int last_substrate, bool *subs_low)
 {
+    // Variable to trac amount of atoms
     int subs_side = 0, prod_side = 0;
+
+    // Calculate quantity of atom on both sides
     for (int i = 0; i < n; i++)
     {
         if (i <= last_substrate)
@@ -621,15 +601,18 @@ bool sides_equal(int n, int sums[], int last_substrate, bool *subs_low)
         }
     }
 
+    // Return true if sides balanced
     if (subs_side == prod_side)
     {
         return true;
     }
+    // Return false if substrate side low
     else if (subs_side < prod_side)
     {
         *subs_low = true;
         return false;
     }
+    // Return false if product side low
     else
     {
         *subs_low = false;
@@ -637,7 +620,7 @@ bool sides_equal(int n, int sums[], int last_substrate, bool *subs_low)
     }
 }
 
-// Balance the selected element
+// Balance element occurring in two compounds
 void balance_two(balance_node *elem, int subs_number)
 {
     int subs_side = 0, prod_side = 0;
@@ -684,11 +667,14 @@ void count_amount(balance_node *p, int subs_number, int *subs_side, int *prod_si
     }
 }
 
+// Calculate lowest common multiple
 int find_lcm(int num1, int num2)
 {
+    // Find which number is higher
     int higher_num = (num1 > num2) ? num1 : num2;
     int value = higher_num;
 
+    // Increase the value until lcm is found
     while(1)
     {
         if (value % num1 == 0 && value % num2 == 0)
@@ -862,32 +848,8 @@ bool check_equation(int argc, char *argv[])
     return true;
 }
 
-void count_compounds(int argc, char *argv[], int *subs, int *prod)
-{
-    bool equal_sign = false;
-    char c;
-    for (int i = 1; i < argc; i++)
-    {
-        c = argv[i][0];
-        if (c == '=')
-        {
-            equal_sign = true;
-            continue;
-        }
-        if (isupper(c) || c == '{' || c == '[')
-        {
-            if (!equal_sign)
-            {
-                *subs += 1;
-            }
-            else
-            {
-                *prod += 1;
-            }
-        }
-    }
-}
-
+// COMPOUND ANALYSIS FUNCTIONS
+// Conduct compound analysis and save data about them in equation structure
 void analyze_compounds(char *argv[], int number, compound *type, int first)
 {
     // Declare variables & counters
@@ -923,9 +885,6 @@ void analyze_compounds(char *argv[], int number, compound *type, int first)
 
                     save_atom(atom, calculate_quantity(quantity, q, multiplier), &(type[n].atoms[m]));
 
-                    // printf("%s\n", atom);
-                    // printf("%d\n", calculate_quantity(quantity, q, multiplier));
-
                     q = 0;
                     m++;
 
@@ -947,9 +906,6 @@ void analyze_compounds(char *argv[], int number, compound *type, int first)
 
                     save_atom(atom, calculate_quantity(quantity, q, multiplier), &(type[n].atoms[m]));
 
-                    // printf("%s\n", atom);
-                    // printf("%d\n", calculate_quantity(quantity, q, multiplier));
-
                     a = 0;
                     q = 0;
                     m++;
@@ -968,9 +924,6 @@ void analyze_compounds(char *argv[], int number, compound *type, int first)
                 quantity[q] = '\0';
 
                 save_atom(atom, calculate_quantity(quantity, q, multiplier), &(type[n].atoms[m]));
-
-                // printf("%s\n", atom);
-                // printf("%d\n", calculate_quantity(quantity, q, multiplier));
 
                 a = 0;
                 q = 0;
@@ -1027,6 +980,7 @@ void analyze_compounds(char *argv[], int number, compound *type, int first)
     }
 }
 
+// Calculate quantity of the atom
 int calculate_quantity(char *quantity, int q, int multiplier)
 {
     if (q == 0)
@@ -1046,12 +1000,14 @@ int calculate_quantity(char *quantity, int q, int multiplier)
     }
 }
 
+// Save atom to the equation data
 void save_atom(char *element, int quantity, atom *save_to)
 {
     save_to->element = find(element);
     save_to->quantity = quantity;
 }
 
+// Find atom in the elements list
 node *find(char *atom)
 {
     // Create cursor to traverse across linked list
@@ -1069,6 +1025,89 @@ node *find(char *atom)
         cursor = cursor->next;
     }
     return NULL;
+}
+
+// OTHER SUPPORTING FUNCTIONS
+// Free memory for equation data
+bool unload_eqtn(void)
+{
+    free(eqtn->substrates);
+    free(eqtn->products);
+    free(eqtn->subs_coefficients);
+    free(eqtn->prod_coefficients);
+    free(eqtn);
+    return true;
+}
+
+// Count number of substrates and products in the equation
+void count_compounds(int argc, char *argv[], int *subs, int *prod)
+{
+    bool equal_sign = false;
+    char c;
+    for (int i = 1; i < argc; i++)
+    {
+        c = argv[i][0];
+        if (c == '=')
+        {
+            equal_sign = true;
+            continue;
+        }
+        if (isupper(c) || c == '{' || c == '[')
+        {
+            if (!equal_sign)
+            {
+                *subs += 1;
+            }
+            else
+            {
+                *prod += 1;
+            }
+        }
+    }
+}
+
+// Return pointer to compound by its number
+compound *get_compound(int comp_number, int subs_number)
+{
+    compound *c;
+
+    // Substrates
+    if (comp_number < subs_number)
+    {
+        c = &(eqtn->substrates[comp_number]);
+    }
+    // Porducts
+    else
+    {
+        c = &(eqtn->products[comp_number - subs_number]);
+    }
+    return c;
+}
+
+// Count how many times element occurs in all compounds in the equation
+int count_occurrences(node *elem, int subs_number, int comp_number, int k)
+{
+    // Initialize counter ot zero
+    int counter = 0;
+
+    // Loop throug all compounds
+    for (int i = k; i < comp_number; i++)
+    {
+        // Get next compound
+        compound *c = get_compound(i, subs_number);
+
+        // Look for the element in compound
+        for (int j = 0; j < c->atom_count; j++)
+        {
+            // If the element is present, increment counter
+            if (elem == c->atoms[j].element)
+            {
+                counter++;
+                break;
+            }
+        }
+    }
+    return counter;
 }
 
 // Print an equation with coefficients
