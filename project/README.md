@@ -1,4 +1,4 @@
-EquationSolver
+### EquationSolver
 
 This is a command-line program whose purpose is to balance chemical equations. The user provides unbalanced equation in the form of command-line arguments, and
 the program prints this equation with coefficients adjusted. For now, EquationSolver is able to solve non-redox reactions.
@@ -25,7 +25,7 @@ Example output:
 
 Here are some equations (properly formatted) for you to test EquationSolver.
 
-CaCO3 = CaO + CO2
-Mg{OH}2 + HNO3 = Mg{NO3}2 + H2O
-CuCl2 + NH3 + H2O = Cu{OH}2 + NH4Cl
-Fe2{SO4}3 + NH4SCN = {NH4}3[Fe{SCN}6] + {NH4}2SO4
+CaCO3 = CaO + CO2  
+Mg{OH}2 + HNO3 = Mg{NO3}2 + H2O  
+CuCl2 + NH3 + H2O = Cu{OH}2 + NH4Cl  
+Fe2{SO4}3 + NH4SCN = {NH4}3[Fe{SCN}6] + {NH4}2SO4  
