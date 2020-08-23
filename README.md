@@ -1,4 +1,4 @@
-# CS50-course-introduction-to-computer-science
+# CS50: Introduction to Computer Science
 
 #### Course scope:
 * C, Python
